@@ -7,7 +7,7 @@ export default function () {
       <div className="w-screen flex-col px-6 py-6 lg:flex lg:px-10 xl:px-24">
         <div className="lg:flex lg:flex-row lg:justify-between">
           <div>
-            <p>AI arcade</p>
+            <p>Arcade</p>
             <p className="font-inter mt-4 max-w-[350px] text-base font-light text-gray-500">
               Generate beautiful arcades with AI.
             </p>
@@ -40,7 +40,7 @@ export default function () {
                 target="_blank"
                 className="font-inter font-light text-gray-500"
               >
-                AI arcade
+                Arcade
               </a>
             </div>
           </div>

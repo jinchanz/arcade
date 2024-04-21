@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '../ui/button';
 
-const WorksCarousel = ({ images }) => {
+const WorksCarousel = ( { images }: any ) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
@@ -21,7 +21,7 @@ const WorksCarousel = ({ images }) => {
   return (
     <div className="carousel h-full w-full overflow-hidden">
       <div className="carousel-inner relative h-full w-full flex items-center justify-center">
-        {images.map((image, index) => (
+        {images.map((image: Record<string, any>, index: number) => (
           <div
             key={index}
             className={`carousel-item absolute h-full w-full flex items-center justify-center transition-opacity duration-500 ${

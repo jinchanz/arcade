@@ -1,6 +1,6 @@
-# AI arcade
+# Arcade
 
-AI arcade Generator by [arcade.863.ai](https://arcade.863.ai)
+Arcade Generator by [arcade.863.ai](https://arcade.863.ai)
 
 ## Live Demo
 
