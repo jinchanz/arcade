@@ -11,7 +11,7 @@ import { genSnowId } from "@/lib/utils";
 
 const MALETTE_API_KEY: string = process.env.MALETTE_API_KEY || ''
 const COMFYUI_ENDPOINT: string = process.env.COMFYUI_ENDPOINT || ''
-const DEFAULT_ARCADE_PROMPT = ',a design rendering of new building development, elegent office tower with clean facade design in the style of metropolis meets nature, people walking on the steet, some green space and trees, dark gray and light amber for the podium building, day time with realistic sunlight, reflection,rainny,rain, humidity,((masterpiece)), (cyberpunk1.3),high las ((best quality:1.4)),(ultra-high resolution:1.2),(realistic:1.4),(8k:1.2),insanely detailed,'
+const DEFAULT_ARCADE_PROMPT = ',a design rendering of new building development, humidity,((masterpiece)), (cyberpunk1.3),high las ((best quality:1.4)),(ultra-high resolution:1.2),(realistic:1.4),(8k:1.2),insanely detailed,'
 
 const requestMaletteResults = async (taskId: string) => {
   const resp = await fetch(`https://malette.art/open/api/v1/workflow/text-arcade/results`, {
@@ -31,7 +31,7 @@ const requestMaletteResults = async (taskId: string) => {
   return data;
 }
 
-const requestMaletteTxt2Img = async (text: string) => {
+const requestMaletteTxt2Img = async (text: string, mode: string = 'async') => {
   const resp = await fetch("https://malette.art/open/api/v1/workflow/lighting_lora2", {
     "headers": {
       "accept": "application/json",
@@ -48,6 +48,13 @@ const requestMaletteTxt2Img = async (text: string) => {
 
   const taskId = data.data.publicId;
   let results = await requestMaletteResults(taskId);
+
+  if (mode === 'async') {
+    return {
+      taskId,
+      status: 'INIT'
+    };
+  }
 
   while (results.data.stage !== 'FINISHED') {
     await new Promise(resolve => setTimeout(resolve, 5000));
@@ -86,54 +93,66 @@ export async function POST(req: Request) {
 
     await saveUser(userInfo);
 
-    const resp = await requestMaletteTxt2Img(description);
+    const resp = await requestMaletteTxt2Img(description, 'async');
 
-    const { taskId, results } = resp;
+    const { taskId, status } = resp;
+    const currentDate = new Date();
+    const created_at = currentDate.toISOString();
 
-    if (!results || results.length === 0) {
-      return respErr("no results");
-    }
+    const works: Works = {
+      publicId: genSnowId(),
+      remote_taskId: taskId,
+      user_id: user_email,
+      img_description: description,
+      resolution: `1024x1024`,
+      image_url: '',
+      status: status || 'INIT',
+      created_at,
+      updated_at: created_at,
+    };
+    await insertWorks(works);
+    return respData([works]);
 
-    const worksList: Works[] = [];
+    // const worksList: Works[] = [];
 
-    await Promise.all(results.map(async (result: any) => {
-      console.log('result: ', result);
-      const url = result?.result?.url;
-      if (url) {
+    // await Promise.all(results.map(async (result: any) => {
+    //   console.log('result: ', result);
+    //   const url = result?.result?.url;
+    //   if (url) {
 
-        const currentDate = new Date();
-        const created_at = currentDate.toISOString();
-        const img_name = encodeURIComponent(description);
-        const s3_img = await downloadAndUploadImage(
-          url,
-          process.env.AWS_BUCKET || "malette",
-          `txt2img/${img_name}.png`
-        );
-        console.log('s3_img: ', s3_img);
-        const works: Works = {
-          publicId: genSnowId(),
-          remote_taskId: taskId,
-          user_id: user_email,
-          img_description: description,
-          resolution: `512x512`,
-          image_url: `txt2img/${img_name}.png`,
-          created_at,
-          updated_at: created_at,
-        };
-        await insertWorks(works);
-        worksList.push({
-          ...works,
-          image_url: await generatePresignedUrl(
-            process.env.AWS_BUCKET || "malette",
-            works.image_url,
-            60 * 60 * 24
-          )
-        });
-      }
-    }));
-    console.log('worksList: ', worksList);
+    //     const currentDate = new Date();
+    //     const created_at = currentDate.toISOString();
+    //     const img_name = encodeURIComponent(description);
+    //     const s3_img = await downloadAndUploadImage(
+    //       url,
+    //       process.env.AWS_BUCKET || "malette",
+    //       `txt2img/${img_name}.png`
+    //     );
+    //     console.log('s3_img: ', s3_img);
+    //     const works: Works = {
+    //       publicId: genSnowId(),
+    //       remote_taskId: taskId,
+    //       user_id: user_email,
+    //       img_description: description,
+    //       resolution: `512x512`,
+    //       image_url: `txt2img/${img_name}.png`,
+    //       created_at,
+    //       updated_at: created_at,
+    //     };
+    //     await insertWorks(works);
+    //     worksList.push({
+    //       ...works,
+    //       image_url: await generatePresignedUrl(
+    //         process.env.AWS_BUCKET || "malette",
+    //         works.image_url,
+    //         60 * 60 * 24
+    //       )
+    //     });
+    //   }
+    // }));
+    // console.log('worksList: ', worksList);
 
-    return respData(worksList);
+    // return respData(worksList);
   } catch (e) {
     console.log("generate works failed: ", e);
     return respErr("generate works failed");

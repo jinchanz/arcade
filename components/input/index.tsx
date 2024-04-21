@@ -59,7 +59,8 @@ export default function ({ worksList, setWorksList }: Props) {
           toast.error(message);
           return;
         }
-        if (data && data.img_url) {
+        console.log("gen works data", data);
+        if (data) {
           fetchUserInfo();
 
           setDescription("");

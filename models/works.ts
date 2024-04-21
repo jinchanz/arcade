@@ -8,9 +8,9 @@ export async function insertWorks(works: Works) {
   const db = getDb();
   const res = await db.query(
     `INSERT INTO works 
-        (public_id, user_id, remote_task_id, img_description, resolution, image_url, created_at, updated_at) 
+        (public_id, user_id, remote_task_id, img_description, resolution, image_url, status, created_at, updated_at) 
         VALUES 
-        ($1, $2, $3, $4, $5, $6, $7, $8)
+        ($1, $2, $3, $4, $5, $6, $7, $8, $9)
     `,
     [
       works.publicId,
@@ -19,7 +19,29 @@ export async function insertWorks(works: Works) {
       works.img_description,
       works.resolution,
       works.image_url,
+      works.status,
       works.created_at,
+      works.updated_at,
+    ]
+  );
+
+  return res;
+}
+
+export async function updateWorks(works: Works) {
+  const db = getDb();
+  const res = await db.query(
+    `UPDATE works SET 
+        remote_task_id = $2, img_description = $3, resolution = $4, image_url = $5, status = $6, updated_at = $7
+        WHERE public_id = $1
+    `,
+    [
+      works.publicId,
+      works.remote_taskId,
+      works.img_description,
+      works.resolution,
+      works.image_url,
+      works.status,
       works.updated_at,
     ]
   );
@@ -112,6 +134,7 @@ export async function formatWorks(row: QueryResultRow): Promise<Works | undefine
     img_description: row.img_description,
     resolution: row.resolution,
     image_url: row.image_url,
+    status: row.status,
     created_at: row.created_at,
     updated_at: row.updated_at,
   };

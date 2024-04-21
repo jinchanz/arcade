@@ -11,4 +11,5 @@ export interface Works {
   created_at: string;
   updated_at: string;
   created_user?: User;
+  status: string;
 }

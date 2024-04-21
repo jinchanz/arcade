@@ -14,7 +14,7 @@ export default function () {
   const [worksList, setWorksList] = useState<Works[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const fetchWorkList = async function (page: number) {
+  const fetchWorkList = async function (page: number, silent = false) {
     try {
       const uri = "/api/list-works";
       const params = {
@@ -22,7 +22,7 @@ export default function () {
         limit: 50,
       };
 
-      setLoading(true);
+      setLoading(!silent);
       const resp = await fetch(uri, {
         method: "POST",
         body: JSON.stringify(params),
@@ -48,6 +48,22 @@ export default function () {
   useEffect(() => {
     fetchWorkList(1);
   }, []);
+
+  useEffect(() => {
+
+    const unfinishedWorks = worksList.filter((work) => work.status !== "FINISHED");
+    if (unfinishedWorks.length === 0) {
+      return;
+    }
+    const handle = setTimeout(() => {
+      fetchWorkList(1, true);
+    }, 2000);
+
+    return () => {
+      clearTimeout(handle);
+    };
+
+  }, [worksList]);
 
   return (
     <div className="pt-8 px-8 min-h-[calc(100vh-80px)]">
